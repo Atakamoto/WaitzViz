@@ -29,17 +29,40 @@ def fetch_waitz_data():
         print("Failed to fetch data:", response.status_code)
         return None
 
+
+def parse_location_data(loc):
+    """ Extract relevant fields and format them properly """
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    name = loc.get("name", "Unknown")
+    percentage = loc.get("percentage", 0)  # Busyness percentage
+    is_open = loc.get("isOpen", False)  # Open status
+
+    return [timestamp, name, percentage, str(is_open)]  # Convert boolean to string
+
 def upload_to_google_sheets(data):
+    """ Uploads parsed data to Google Sheets """
+
     sheet = client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 
-    # Convert data to DataFrame
-    df = pd.DataFrame(data)
-    df["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(data, dict):
+        locations = data.get("data", [])  # Extract list from dictionary
+    elif isinstance(data, list):
+        locations = data  # If already a list, use it directly
+    else:
+        raise ValueError("ERROR: Unexpected data format - Expected dict or list, got", type(data))
+    parsed_data = [parse_location_data(loc) for loc in locations if isinstance(loc, dict)]
+
+    if not parsed_data:
+        print("No valid data to upload!")
+        return
+
+    # Convert to DataFrame for easy manipulation
+    df = pd.DataFrame(parsed_data, columns=["Timestamp", "Name", "Busyness (%)", "Is Open"])
 
     # Append data to Google Sheets
     sheet.append_rows(df.values.tolist())
 
-    print("✅ Data uploaded to Google Sheets!")
+    print("Data successfully uploaded to Google Sheets!")
 
 def lambda_handler(event, context):
     data = fetch_waitz_data()
