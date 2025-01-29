@@ -1,4 +1,4 @@
-# Waitz Data Scraper
+# Waitz Data Scraper (for UCSD Building Crowdedness Information)
 
 This project retrieves real-time busyness data from the **Waitz API** and uploads it to **Google Sheets** using an AWS Lambda function. The script extracts location names, occupancy percentages, and open/closed status while also recording timestamps for tracking trends over time.
 
